@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "react-router-dom": "^7.0.1"
+  },
+  "dependencies": {
+    "tailwind-scrollbar-hide": "^1.1.7"
+  }
+}
