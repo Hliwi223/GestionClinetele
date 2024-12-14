@@ -13,7 +13,7 @@ import java.util.List;
 public class ClientController {
 
     private final ClientService clientService;
-
+        
     @PostMapping("/addClient")
     public ClientDTO addClient(@RequestBody ClientDTO clientDTO) {
         return clientService.saveClient(clientDTO);
@@ -22,6 +22,11 @@ public class ClientController {
     @GetMapping("/clients")
     public List<ClientDTO> getAllClients() {
         return clientService.getAllClients();
+    }
+
+    @GetMapping("/clients/exists")
+    public boolean checkClientExists(@RequestParam("nom") String nom) {
+        return clientService.clientExistsByNom(nom);
     }
     
 }

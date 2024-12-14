@@ -1,8 +1,7 @@
 
 import {List, Popover, Table} from "flowbite-react";
-import React, {useEffect, useState} from "react";
+import  {useEffect, useState} from "react";
 import axios from "axios";
-import Navbar from "../customComponent/navbar.tsx";
 import Dashboard from "../dashboard/Dashboard.tsx";
 const ListFactures = () => {
 
@@ -96,7 +95,7 @@ const ListFactures = () => {
     return (
 
         <div className=" flex">
-            <Dashboard sidebarOpen={true} setSidebarOpen={true}/>
+            <Dashboard sidebarOpen={true} setSidebarOpen={()=>true}/>
             <div className="">
                 <Table hoverable className="ml-72">
                         <Table.Head>
@@ -115,7 +114,7 @@ const ListFactures = () => {
                                         {r.numero}
                                     </Table.Cell>
                                     <Table.Cell>{new Date(r.date).toLocaleDateString()}</Table.Cell>
-                                    <Table.Cell>{r.montantTotal}</Table.Cell>
+                                    <Table.Cell>{r.montantTotal} TND</Table.Cell>
                                     <Table.Cell><Popover content={content(r.reparation)} placement="right">
                                         <a href="#"
                                            className="font-medium text-cyan-600 hover:underline dark:text-cyan-500">

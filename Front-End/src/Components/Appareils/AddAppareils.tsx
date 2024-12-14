@@ -1,62 +1,99 @@
 import Dashboard from "../dashboard/Dashboard.tsx";
-import {FormEvent, useEffect, useState} from "react";
+import  {FormEvent, useState} from "react";
 import  axios from "axios";
+import Alert from "../customComponent/Alerts.tsx";
 
 
 function  AddAppareils() {
 
+    //alert
+    const [isAlertVisible, setIsAlertVisible] = useState(false);
+    const [alertMessage, setAlertMessage] = useState('');
+    const [alertType, setAlertType] = useState('');
+
+    // Appareil state
     const [Appareil, setAppareil] = useState(
         {
             marque:'',
             modele:'',
             numSerie:'',
-            clientID:''
         });
-    const [clients, setClients] = useState([]);
 
-    useEffect(() => {
-        axios.get("http://localhost:8080/api/clients").then(
-            res=>{
-                setClients(res.data);
-            }).catch(error => {
-            console.log(error);
-        });
-    }, []);
+    // Check if appareil already exists
+    const checkIfAppareilExists = async (numSerie: string) => {
+        try {
+            const response = await axios.get(`http://localhost:8080/api/appareils/exists/${numSerie}`);
+            return response.data;
+        } catch (error) {
+            console.error("Error checking if appareil exists:", error);
+            return false; // Default to not existing if the check fails
+        }
+    };
 
-
-    const handleChange = (e: any) => {
+    // Handle input changes
+    const handleChange =   ( e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setAppareil({ ...Appareil, [name]: value });
         console.log(`Updated Appareil:`, { ...Appareil, [name]: value });
     };
 
-    const handleSubmit = (e:FormEvent<HTMLFormElement>) => {
+    // Handle form submission
+    const handleSubmit =async (e:FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        console.log("Appareil on submit:", Appareil);
+
+        // Validate inputs
+        if (!Appareil.marque || !Appareil.modele || !Appareil.numSerie ) {
+            setAlertMessage("Tous les champs sont obligatoires.");
+            setAlertType("error");
+            setIsAlertVisible(true);
+            return;
+        }
+
+        // Check if the appareil already exists
+        const exists = await checkIfAppareilExists(Appareil.numSerie);
+        if (exists) {
+            setAlertMessage("Un appareil avec ce numéro de série existe déjà.");
+            setAlertType("error");
+            setIsAlertVisible(true);
+            return;
+        }
+
         const AppareilOpbject = {
             marque: Appareil.marque,
             modele: Appareil.modele,
             numSerie: Appareil.numSerie,
-            client: { id: Appareil.clientID }
+            client: null
         };
-        console.log("Payload on submit:", AppareilOpbject);
-        axios.post("http://localhost:8080/api/addAppareil", AppareilOpbject)
-            .then((res : any)  => {
-                setAppareil({ marque: '', modele: '', numSerie: '' , clientID: ''})
-            }).catch(error => {
-            console.log(error);
-        });
-    }
+        try {
+            await axios.post("http://localhost:8080/api/addAppareil", AppareilOpbject);
+            setAlertMessage("Appareil ajouté avec succès !");
+            setAlertType("success");
+            setIsAlertVisible(true);
+
+            // Reset form
+            setAppareil({
+                marque: "",
+                modele: "",
+                numSerie: "",
+            });
+        }catch (error) {
+            console.error("Error adding appareil:", error);
+            setAlertMessage("Erreur lors de l'ajout de l'appareil.");
+            setAlertType("error");
+            setIsAlertVisible(true);
+        }
+    };
     return (
         <div>
             {/* Dashboard with Sidebar */}
-            <Dashboard sidebarOpen={true} setSidebarOpen={true}/>
+            <Dashboard sidebarOpen={true} setSidebarOpen={()=> true}/>
 
             <form className="space-y-12" onSubmit={handleSubmit}>
                 <div className="ml-64 border-b border-gray-900/10 pb-12">
                     <h2 className="text-lg font-semibold text-gray-900">Ajouter Appareil</h2>
 
                     <div className="mt-10 space-y-8">
+                        {isAlertVisible &&  <Alert message={alertMessage} type={alertType}/>}
                         {/* Marque Input */}
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium text-gray-900 text-left">
@@ -115,7 +152,7 @@ function  AddAppareils() {
                                 />
                             </div>
                         </div>
-                        {/* id Client Input */}
+                        {/* id Client Input
                         <div>
                             <label htmlFor="phone" className="block text-sm font-medium text-gray-900 text-left">
                                 Client
@@ -135,7 +172,7 @@ function  AddAppareils() {
                                 ))}
                             </select>
                         </div>
-
+*/}
 
                     </div>
                 </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState} from "react";
+import  { useEffect, useState} from "react";
 import Dashboard from "../dashboard/Dashboard.tsx";
 import axios from "axios";
 import {Table} from "flowbite-react";
@@ -22,7 +22,7 @@ function  Clients(){
     return (
 
             <div className=" flex">
-                <Dashboard sidebarOpen={true} setSidebarOpen={true}/>
+                <Dashboard sidebarOpen={true} setSidebarOpen={()=>true}/>
 
                     <Table hoverable className=" ml-80">
                         <Table.Head>

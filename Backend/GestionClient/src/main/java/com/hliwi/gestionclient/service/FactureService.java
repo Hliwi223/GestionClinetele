@@ -41,7 +41,7 @@ public class FactureService {
 
         Reparation reparation = reparationRepository.findById(facture.getReparation().getId())
                 .orElseThrow(() -> new RuntimeException("Reparation non trouvée"));
-
+        facture.setReparation(reparation);
         BigDecimal totalPieces = calculateTotalPieces(reparation);
         BigDecimal totalMainDoeuvre = calculateTotalMainDoeuvre(reparation);
 
@@ -51,14 +51,16 @@ public class FactureService {
         facture.setMontantTotal(montantTTC);
 
         Facture savedFacture = factureRepository.save(facture);
+        System.out.println("Saved facture: " + savedFacture);
         return fromEntity(factureRepository.save(savedFacture));
     }
 
     public BigDecimal calculateTotalPieces(Reparation reparation) {
         return reparation.getReparationPieces().stream()
-                .map((ReparationPiece t) -> t.getPieceRecharge().getPrixAchat())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .map(piece -> piece.getPieceRecharge().getPrixAchat().multiply(BigDecimal.valueOf(piece.getQte())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add); // Sum up the total price with quantities
     }
+
 
     public BigDecimal calculateTotalMainDoeuvre(Reparation reparation) {
         return reparation.getTempsMO().multiply(reparation.getTarifHMO());

@@ -5,10 +5,10 @@ import com.hliwi.gestionclient.Models.Client;
 import com.hliwi.gestionclient.repository.ClientRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.hliwi.gestionclient.Dto.ClientDTO.fromEntity;
 
 
 @Service
@@ -23,14 +23,17 @@ public class ClientService {
                 .collect(Collectors.toList());
     }
 
-    public ClientDTO getClientById(Long id) {
+    public Client getClientById(Long id) {
         return clientRepository.findById(id)
-                .map(ClientDTO::fromEntity)
                 .orElseThrow(() -> new RuntimeException("Client not found with id: " + id));
     }
 
+    public boolean clientExistsByNom(String nom) {
+        return clientRepository.findByNom(nom).isPresent();
+    }
+
     public ClientDTO saveClient(ClientDTO clientDTO) {
-        return ClientDTO.fromEntity(clientRepository.save(Client.toEntity(clientDTO)));
+        return fromEntity(clientRepository.save(Client.toEntity(clientDTO)));
     }
 
 }

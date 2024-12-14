@@ -1,5 +1,6 @@
 package com.hliwi.gestionclient.Dto;
 
+import com.hliwi.gestionclient.Models.DemandeReparation;
 import com.hliwi.gestionclient.Models.Reparation;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,8 +37,10 @@ public class ReparationDTO {
     }
 
     public static Reparation toEntity(ReparationDTO dto) {
+        if (dto == null) return null;
         Reparation reparation = new Reparation();
         reparation.setId(dto.getId());
+        reparation.setDemandeReparation(DemandeReparation.toEntity(dto.getDemandeReparation())); // Handles null
         reparation.setDateRep(dto.getDateRep());
         reparation.setDescription(dto.getDescription());
         reparation.setTarifHMO(dto.getTarifHMO());

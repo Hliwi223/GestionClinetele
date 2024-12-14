@@ -26,6 +26,7 @@ public class Client {
 
 
     public static Client  toEntity(ClientDTO Dto){
+        if(Dto==null)return null;
         return Client.builder()
                 .id(Dto.getId())
                 .nom(Dto.getNom())

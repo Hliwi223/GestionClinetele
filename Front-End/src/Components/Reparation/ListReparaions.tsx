@@ -85,7 +85,7 @@ const ListReparaions = ()=> {
         <div className=" flex">
             <Dashboard sidebarOpen={true} setSidebarOpen={true}/>
             <div className="">
-                <Table hoverable className="ml-52">
+                <Table hoverable className="ml-44">
                     <Table.Head>
                         <Table.HeadCell>
                             <span className="sr-only">Edit</span>
@@ -95,7 +95,6 @@ const ListReparaions = ()=> {
                         <Table.HeadCell>tarifHMO</Table.HeadCell>
                         <Table.HeadCell>tempsMO</Table.HeadCell>
                         <Table.HeadCell>Demande Reparation</Table.HeadCell>
-
                     </Table.Head>
                     <Table.Body className="divide-y">
                         {reparations.map((r: any) => (
@@ -108,7 +107,7 @@ const ListReparaions = ()=> {
                                 <Table.Cell>{r.tarifHMO}</Table.Cell>
                                 <Table.Cell>{r.tempsMO}</Table.Cell>
                                 <Table.Cell>
-                                    <Popover content={content(r.demandeReparation)} placement="right">
+                                    <Popover content={content(r.demandeReparation)}  placement="right">
                                         <a href="#"
                                            className="font-medium text-cyan-600 hover:underline dark:text-cyan-500">
                                             {r.demandeReparation.id}

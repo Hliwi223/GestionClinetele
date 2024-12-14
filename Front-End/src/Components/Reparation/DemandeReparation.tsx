@@ -1,18 +1,21 @@
 import Dashboard from "../dashboard/Dashboard.tsx";
 import {FormEvent, useEffect, useState} from "react";
 import  axios from "axios";
-
-
+import Alert from "../customComponent/Alerts.tsx";
 
 
 function DemandeReparation() {
+    // Alert State
+    const [isAlertVisible, setIsAlertVisible] = useState(false);
+    const [alertMessage, setAlertMessage] = useState('');
+    const [alertType, setAlertType] = useState<'success' | 'error'>('success');
 
-
+    // Clients and Appareils State
     const [clients, setClients] = useState([]);
     const [appareils, setAppareils] = useState([]);
 
-    const [demandeReparation, setDemandeReparation] = useState(
-        {
+    // Form State
+    const [demandeReparation, setDemandeReparation] = useState({
             clientId : '',
             appareilId:'',
             datePrevue:'',
@@ -21,28 +24,50 @@ function DemandeReparation() {
 
         });
 
-    const handleChange = (e: any) => {
+    // Update Form State on Input Change
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setDemandeReparation({ ...demandeReparation, [name]: value });
-        console.log(`Updated Demande :`, { ...demandeReparation, [name]: value });
     };
     useEffect(() => {
-        axios.get("http://localhost:8080/api/clients").then(
-            res=>{
-                setClients(res.data);
-            }).catch(error => {
-            console.log(error);
-        });
-        axios.get("http://localhost:8080/api/appareils").then(
-            res=>{
-                setAppareils(res.data);
-            }).catch(error => {
-            console.log(error);
-        });
+        axios.get("http://localhost:8080/api/clients")
+            .then(res => setClients(res.data))
+            .catch(error => console.error("Error fetching clients:", error));
+
+        axios.get("http://localhost:8080/api/appareils")
+            .then(res => setAppareils(res.data))
+            .catch(error => console.error("Error fetching appareils:", error));
     }, []);
+
+
+    // Update Appareil with Associated Client
+    const updateAppareil = async (appareilId: string, client: any) => {
+        try {
+            await axios.put(`http://localhost:8080/api/update-appareil/${appareilId}`, client);
+        } catch (error) {
+            console.error("Error updating appareil:", error);
+            setAlertMessage("Erreur lors de la mise à jour de l'appareil.");
+            setAlertType('error');
+            setIsAlertVisible(true);
+        }
+    };
+    // Form Submission Handler
     const handleSubmit = async  (e:FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
+        // Reset Alert State
+        setIsAlertVisible(false);
+        setAlertMessage("");
+
+        // Validate Required Fields
+        if (!demandeReparation.clientId || !demandeReparation.appareilId || !demandeReparation.datePrevue || !demandeReparation.symptomesPanne) {
+            setAlertMessage("Tous les champs sont obligatoires.");
+            setAlertType("error");
+            setIsAlertVisible(true);
+            return;
+        }
+
+        //  New Demande Object
         const newDemande = {
             dateDepotAppareil: new Date().toISOString().split('T')[0],
             datePrevueRep :new Date(demandeReparation.datePrevue).toISOString().split('T')[0],
@@ -51,22 +76,30 @@ function DemandeReparation() {
             appareil: {id:demandeReparation.appareilId },
             client: {id:demandeReparation.clientId }
         };
-        try {
-            const response = await axios.post("http://localhost:8080/api/demande-reparation",newDemande);
-            alert("Demande de reparation crée avec sucvés !")
-            setDemandeReparation( {
-                clientId : '',
-                appareilId:'',
-                datePrevue:'',
-                symptomesPanne:'',
-                etat:'EN_ATTENTE'
 
-            })
-            console.log(response.data)
-        }catch (err){
-            console.log(err)
-            console.log(newDemande);
-            alert("Erreur lors de la creation de la demande ")
+        try {
+            // Update Appareil with Client Association
+            await updateAppareil(newDemande.appareil.id, newDemande.client);
+
+            // Submit Demande Reparation
+            const response = await axios.post("http://localhost:8080/api/demande-reparation",newDemande);
+            setAlertMessage("Demande de réparation créée avec succès !");
+            setAlertType("success");
+            setIsAlertVisible(true);
+
+            // Reset Form
+            setDemandeReparation({
+                clientId: '',
+                appareilId: '',
+                datePrevue: '',
+                symptomesPanne: '',
+                etat: 'EN_ATTENTE'
+            });
+        } catch (error) {
+            console.error("Error creating demande reparation:", error);
+            setAlertMessage("Erreur lors de la création de la demande de réparation.");
+            setAlertType("error");
+            setIsAlertVisible(true);
         }
 
     }
@@ -80,6 +113,7 @@ function DemandeReparation() {
                     <h2 className="text-lg font-semibold text-gray-900">Demande Reparation</h2>
 
                     <div className="mt-10 space-y-8">
+                        {isAlertVisible && <Alert message={alertMessage} type={alertType}/>}
                         {/* Client Input */}
                         <div>
                             <label htmlFor="phone" className="block text-sm font-medium text-gray-900 text-left">
@@ -89,6 +123,7 @@ function DemandeReparation() {
                                 name="clientId"
                                 value={demandeReparation.clientId}
                                 onChange={handleChange}
+                                required
                                 className={`relative z-20 w-full text-black rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary 
                                 }`}
                             >
@@ -109,6 +144,7 @@ function DemandeReparation() {
                                 name="appareilId"
                                 value={demandeReparation.appareilId}
                                 onChange={handleChange}
+                                required
                                 className={`relative z-20 w-full text-black rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary 
                                 }`}
                             >
@@ -167,6 +203,15 @@ function DemandeReparation() {
                     <button
                         type="button"
                         className="text-sm font-semibold text-gray-900"
+                        onClick={() =>
+                            setDemandeReparation({
+                                clientId: '',
+                                appareilId: '',
+                                datePrevue: '',
+                                symptomesPanne: '',
+                                etat: 'EN_ATTENTE'
+                            })
+                        }
                     >
                         Annuler
                     </button>

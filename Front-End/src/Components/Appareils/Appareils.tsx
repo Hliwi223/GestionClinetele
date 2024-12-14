@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import  {useEffect, useState} from 'react';
 import axios from "axios";
 import Dashboard from "../dashboard/Dashboard.tsx";
 import {List, Popover, Table} from "flowbite-react";
@@ -17,6 +17,7 @@ function Appareils():any {
         axios.get("http://localhost:8080/api/appareils").then(
             res=>{
                 setAppareils(res.data);
+                console.log(appareils)
             }).catch(error => {
             console.log(error);
         });
@@ -56,18 +57,16 @@ function Appareils():any {
                                     <Table.Cell>{a.modele}</Table.Cell>
                                     <Table.Cell>{a.numSerie}</Table.Cell>
                                     <Table.Cell>
-                                        <Popover content={content(a.client)} placement="right">
+                                        {a.client == null ? "Not Selected" : <Popover content={content(a.client)} placement="right">
                                             <a href="#"
                                                className="font-medium text-cyan-600 hover:underline dark:text-cyan-500">
                                                 {a.client.id}
                                             </a>
-                                        </Popover>
+                                        </Popover> }
 
                                     </Table.Cell>
                                 </Table.Row>
                             ))}
-
-
                         </Table.Body>
                     </Table>
                 </div>

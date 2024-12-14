@@ -1,5 +1,6 @@
 package com.hliwi.gestionclient.contoller;
 
+import com.hliwi.gestionclient.Dto.ClientDTO;
 import com.hliwi.gestionclient.Dto.DemandeReparationDTO;
 
 import com.hliwi.gestionclient.service.DemandeReparationService;

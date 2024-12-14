@@ -9,6 +9,5 @@ import java.util.List;
 
 @Repository
 public interface AppareilRepository extends JpaRepository<Appareil, Long> {
-    List<Appareil> findByMarque(String marque);
-    List<Appareil> findByClient(Client client);
+    boolean existsByNumSerie(String numSerie);
 }

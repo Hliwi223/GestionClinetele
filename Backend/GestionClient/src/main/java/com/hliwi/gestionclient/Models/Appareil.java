@@ -26,7 +26,7 @@ public class Appareil {
     private String numSerie;
 
     @ManyToOne
-    @JoinColumn(name = "client_id",nullable = false)
+    @JoinColumn(name = "client_id",nullable  = true)
     private Client client;
 
     @OneToMany(mappedBy = "appareil", cascade = CascadeType.ALL)
@@ -38,7 +38,7 @@ public class Appareil {
                 .marque(dto.getMarque())
                 .modele(dto.getModele())
                 .numSerie(dto.getNumSerie())
-                .client(Client.toEntity(dto.getClient()))
+                .client(dto.getClient() != null ? Client.toEntity(dto.getClient()) : null)
                 .build();
     }
 }

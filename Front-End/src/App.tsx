@@ -25,6 +25,7 @@ function App() {
               <Routes>
                   <Route path="/dashboard" element={<Dashboard sidebarOpen={true} setSidebarOpen={true}/>}/>
                   <Route path="/login" element={<Login/>}/>
+                  <Route path="/" element={<Login/>}/>
                   <Route path="/clients" element={<Clients/>}/>
                   <Route path="/AddClient" element={<AddClient/>}/>
                   <Route path="/AddAppareil" element={<AddAppareils/>}/>

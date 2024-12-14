@@ -26,9 +26,9 @@ const AddPiece: React.FC = () => {
                 setTypePieces(res.data);
                 }
             ) .catch(err => {
-            setIsAlertVisible(true)
-            setAlertType('error');
+                setAlertType('error');
             setAlertMessage(`Error ! fetching typePieces ${err.message}`);
+            setIsAlertVisible(true)
          })
     }, []);
     const handleChange =  (e :React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLSelectElement> ) => {

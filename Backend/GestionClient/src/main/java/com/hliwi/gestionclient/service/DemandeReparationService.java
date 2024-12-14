@@ -7,6 +7,8 @@ import com.hliwi.gestionclient.Models.Client;
 import com.hliwi.gestionclient.Models.DemandeReparation;
 import com.hliwi.gestionclient.enums.Etat;
 import com.hliwi.gestionclient.repository.DemandeReparationRepository;
+import jakarta.persistence.TableGenerator;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -23,11 +25,27 @@ import static com.hliwi.gestionclient.Models.DemandeReparation.toEntity;
 public class DemandeReparationService {
 
     private final DemandeReparationRepository demandeReparationRepository;
+    private final ClientService clientService;
+    private final AppareilService  appareilService;
 
-
+    @Transactional
     public DemandeReparationDTO saveDemandeReparation(DemandeReparationDTO demandeReparationDTO) {
         DemandeReparation demandeReparation = toEntity(demandeReparationDTO);
-        return fromEntity(demandeReparationRepository.save(demandeReparation));
+
+        if (demandeReparationDTO.getAppareil() == null || demandeReparationDTO.getAppareil().getId() == null) {
+            throw new IllegalArgumentException("Appareil ID must be provided in DemandeReparationDTO");
+        }
+        Appareil appareil = appareilService.getAppareilById(demandeReparationDTO.getAppareil().getId());
+
+        // Step 2: Set the Appareil and associated Client on DemandeReparation
+        demandeReparation.setAppareil(appareil);
+        demandeReparation.setClient(appareil.getClient());
+
+        // Step 3: Save the DemandeReparation
+        DemandeReparation savedDemandeReparation = demandeReparationRepository.save(demandeReparation);
+
+
+        return fromEntity(demandeReparationRepository.save(savedDemandeReparation));
     }
 
     public List<DemandeReparationDTO> getAllDemandeReparations() {

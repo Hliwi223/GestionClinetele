@@ -44,14 +44,15 @@ public class DemandeReparation {
     private Reparation reparation;
 
     public static DemandeReparation toEntity(DemandeReparationDTO dto) {
+        if (dto == null) return null;
         return DemandeReparation.builder()
                 .id(dto.getId())
                 .dateDepotAppareil(dto.getDateDepotAppareil())
                 .datePrevueRep(dto.getDatePrevueRep())
                 .etat(dto.getEtat())
                 .symptomesPanne(dto.getSymptomesPanne())
-                .client(Client.toEntity(dto.getClient()))
-                .appareil(Appareil.toEntity(dto.getAppareil()))
+                .client(dto.getClient() != null ? Client.toEntity(dto.getClient()) : null)
+                .appareil(dto.getAppareil() != null ? Appareil.toEntity(dto.getAppareil()) : null)
                 .build();
     }
 

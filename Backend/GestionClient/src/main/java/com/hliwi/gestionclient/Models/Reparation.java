@@ -33,7 +33,7 @@ public class Reparation {
     @OneToOne(mappedBy = "reparation", cascade = CascadeType.ALL)
     private Facture facture;
 
-    @OneToMany(mappedBy = "reparation", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "reparation", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReparationPiece> reparationPieces;
 
 }

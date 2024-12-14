@@ -17,6 +17,7 @@ public class ReparationController {
 
     @PostMapping("/create")
     public ReparationDTO  createReparation(@RequestBody ReparationDTO reparationDTO) {
+        System.out.println("Received ReparationDTO: " + reparationDTO);
         return reparationService.createReparation(reparationDTO);
     }
     @GetMapping

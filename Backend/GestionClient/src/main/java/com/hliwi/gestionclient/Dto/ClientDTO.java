@@ -21,10 +21,14 @@ public class ClientDTO  {
     private List<DemandeReparationDTO> demandesReparation;
 
     public static ClientDTO fromEntity(Client entity) {
+
+        if (entity == null) return null;
         return  ClientDTO.builder()
                 .id(entity.getId())
                 .nom(entity.getNom())
                 .adresse(entity.getAdresse())
                 .numTel(entity.getNumTel()).build();
     }
+
+
 }
