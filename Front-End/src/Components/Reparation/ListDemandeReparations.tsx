@@ -5,7 +5,10 @@ import { List, Popover, Table } from "flowbite-react";
 import { useNavigate } from "react-router-dom";
 
 function ListDemandeReparations() {
-    const [reparations, setReparations] = useState([]);
+    const [reparations, setReparations] = useState([]); // Original data
+    const [filteredReparations, setFilteredReparations] = useState([]); // Filtered data
+    const [searchQuery, setSearchQuery] = useState(""); // Search input state
+
     const [selectedDemande, setSelectedDemande] = useState<{ id: number } | null>(null);
     const [status, setStatus] = useState("EN_ATTENTE");
     const [showModal, setShowModal] = useState(false);
@@ -14,7 +17,6 @@ function ListDemandeReparations() {
     const [alertMessage, setAlertMessage] = useState("");
     const [alertType, setAlertType] = useState<"success" | "error">("success");
     const [isModalVisible, setIsModalVisible] = useState(false);
-    // Close Modal
     const closeModal = () => setIsModalVisible(false);
 
     const navigate = useNavigate();
@@ -24,8 +26,6 @@ function ListDemandeReparations() {
         setAlertMessage(message);
         setAlertType(type);
         setIsModalVisible(true);
-
-        // Close modal after 5 seconds
         setTimeout(() => {
             setIsModalVisible(false);
         }, 4000);
@@ -45,6 +45,7 @@ function ListDemandeReparations() {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setReparations(response.data);
+            setFilteredReparations(response.data); // Initialize filtered list
         } catch (error: any) {
             if (error.response?.status === 403) {
                 localStorage.removeItem("token");
@@ -57,38 +58,30 @@ function ListDemandeReparations() {
         }
     };
 
-    // Update Status
-    const handleUpdateStatus = async (id: number, newStatus: string) => {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            showAlert("Session expirée. Veuillez vous reconnecter.", "error");
-            navigate("/login");
-            return;
-        }
+    useEffect(() => {
+        fetchReparations();
+    }, []);
 
-        try {
-            await axios.put(
-                `http://localhost:8080/api/update-status/${id}`,
-                {},
-                {
-                    params: { status: newStatus },
-                    headers: { Authorization: `Bearer ${token}` },
-                }
+    // Search Logic
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const query = e.target.value.toLowerCase();
+        setSearchQuery(query);
+        const filtered = reparations.filter((r: any) => {
+            const dateDepot = new Date(r.dateDepotAppareil).toLocaleDateString().toLowerCase();
+            const symptomes = r.symptomesPanne?.toLowerCase() || "";
+            const clientNom = r.client?.nom?.toLowerCase() || "";
+            const appareilMarque = r.appareil?.marque?.toLowerCase() || "";
+            const etat = r.etat?.toLowerCase() || "";
+
+            return (
+                dateDepot.includes(query) ||
+                symptomes.includes(query) ||
+                clientNom.includes(query) ||
+                appareilMarque.includes(query)||
+                    etat.includes(query)
             );
-            showAlert("Statut mis à jour avec succès !", "success");
-            setShowModal(false);
-            setStatus("EN_ATTENTE");
-            fetchReparations();
-        } catch (error: any) {
-            if (error.response?.status === 403) {
-                localStorage.removeItem("token");
-                showAlert("Session expirée. Veuillez vous reconnecter.", "error");
-                navigate("/login");
-            } else {
-                console.error("Error updating status:", error);
-                showAlert("Erreur lors de la mise à jour du statut.", "error");
-            }
-        }
+        });
+        setFilteredReparations(filtered);
     };
 
     // Popover Content for Client
@@ -99,7 +92,7 @@ function ListDemandeReparations() {
             </div>
             <div className="px-3 py-2">
                 <List>
-                    <List.Item>Nom : {c.nom}</List.Item>
+                    <List.Item>Id : {c.id}</List.Item><List.Item>Nom : {c.nom}</List.Item>
                     <List.Item>Numéro Tel : {c.numTel}</List.Item>
                 </List>
             </div>
@@ -114,6 +107,7 @@ function ListDemandeReparations() {
             </div>
             <div className="px-3 py-2">
                 <List>
+                    <List.Item>ID: {a.id}</List.Item>
                     <List.Item>Marque: {a.marque}</List.Item>
                     <List.Item>Modèle : {a.modele}</List.Item>
                     <List.Item>Numéro de Série: {a.numSerie}</List.Item>
@@ -122,38 +116,22 @@ function ListDemandeReparations() {
         </div>
     );
 
-    useEffect(() => {
-        fetchReparations();
-    }, []);
-
     return (
         <div className="flex">
             <Dashboard sidebarOpen={true} setSidebarOpen={() => true} />
 
             <div className="ml-48 mt-6 w-full">
-                {/* Alert */}
-                {isModalVisible && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                        <div className="bg-white rounded-lg p-6 w-96 shadow-lg">
-                            <h3
-                                className={`text-lg font-semibold ${
-                                    alertType === "success" ? "text-green-600" : "text-red-600"
-                                }`}
-                            >
-                                {alertType === "success" ? "Succès" : "Erreur"}
-                            </h3>
-                            <p className="mt-2 text-gray-700">{alertMessage}</p>
-                            <div className="mt-4 flex justify-end">
-                                <button
-                                    onClick={closeModal}
-                                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-500"
-                                >
-                                    Fermer
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                {/* Search Bar */}
+                <div className="flex justify-end mb-4">
+                    <input
+                        type="text"
+                        placeholder="Rechercher par date, symptômes, client ou appareil..."
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        className="border border-gray-300 rounded-md px-3 py-2 w-1/3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                </div>
+
                 {/* Reparations Table */}
                 <Table hoverable>
                     <Table.Head>
@@ -163,10 +141,9 @@ function ListDemandeReparations() {
                         <Table.HeadCell>Client</Table.HeadCell>
                         <Table.HeadCell>Appareil</Table.HeadCell>
                         <Table.HeadCell>État</Table.HeadCell>
-                        <Table.HeadCell>Actions</Table.HeadCell>
                     </Table.Head>
                     <Table.Body className="divide-y">
-                        {reparations.map((r: any) => (
+                        {filteredReparations.map((r: any) => (
                             <Table.Row key={r.id} className="bg-white dark:border-gray-700 dark:bg-gray-800">
                                 <Table.Cell>{new Date(r.dateDepotAppareil).toLocaleDateString()}</Table.Cell>
                                 <Table.Cell>{new Date(r.datePrevueRep).toLocaleDateString()}</Table.Cell>
@@ -174,67 +151,25 @@ function ListDemandeReparations() {
                                 <Table.Cell>
                                     <Popover content={contentC(r.client)} placement="right">
                                         <span className="text-cyan-600 cursor-pointer hover:underline">
-                                            {r.client.id}
+                                            {r.client?.nom || "N/A"}
                                         </span>
                                     </Popover>
                                 </Table.Cell>
                                 <Table.Cell>
                                     <Popover content={contentA(r.appareil)} placement="right">
                                         <span className="text-cyan-600 cursor-pointer hover:underline">
-                                            {r.appareil.id}
+                                            {r.appareil?.marque || "N/A"}
                                         </span>
                                     </Popover>
                                 </Table.Cell>
                                 <Table.Cell>{r.etat}</Table.Cell>
-                                <Table.Cell>
-                                    <button
-                                        onClick={() => {
-                                            setSelectedDemande(r);
-                                            setShowModal(true);
-                                        }}
-                                        className="text-cyan-600 hover:underline"
-                                    >
-                                        Modifier
-                                    </button>
-                                </Table.Cell>
                             </Table.Row>
                         ))}
                     </Table.Body>
                 </Table>
-
-                {/* Modal for Updating Status */}
-                {showModal && (
-                    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
-                        <div className="bg-white rounded-lg w-96 p-6">
-                            <h3 className="text-xl font-semibold mb-4">Mettre à jour le statut</h3>
-                            <select
-                                value={status}
-                                onChange={(e) => setStatus(e.target.value)}
-                                className="w-full p-2 border border-gray-300 rounded-md mb-4"
-                            >
-                                <option value="EN_ATTENTE">En attente</option>
-                                <option value="EN_COURS">En cours</option>
-                                <option value="TERMINE">Terminé</option>
-                            </select>
-                            <div className="flex justify-between">
-                                <button
-                                    onClick={() => selectedDemande && handleUpdateStatus(selectedDemande.id, status)}
-                                    className="bg-black text-white px-4 py-2 rounded-md"
-                                >
-                                    Mettre à jour
-                                </button>
-                                <button
-                                    onClick={() => setShowModal(false)}
-                                    className="bg-red-500 text-white px-4 py-2 rounded-md"
-                                >
-                                    Annuler
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );
 }
+
 export default ListDemandeReparations;

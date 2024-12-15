@@ -27,6 +27,6 @@ public class ReparationPiece {
 
     private PieceRecharge pieceRecharge;
 
-    private int qte;
+    private Integer qte;
 
 }

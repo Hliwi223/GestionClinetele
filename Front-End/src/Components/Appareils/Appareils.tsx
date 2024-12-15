@@ -12,7 +12,9 @@ interface Client {
 }
 
 function Appareils() {
-    const [appareils, setAppareils] = useState([]);
+    const [appareils, setAppareils] = useState([]); // Original list of appareils
+    const [filteredAppareils, setFilteredAppareils] = useState([]); // Filtered list
+    const [searchQuery, setSearchQuery] = useState(""); // Search input state
 
     // Alert State
     const [alertMessage, setAlertMessage] = useState("");
@@ -21,19 +23,15 @@ function Appareils() {
 
     const navigate = useNavigate();
 
-    // Function to show alerts dynamically in a modal with timeout
     const showAlert = (message: string, type: "success" | "error") => {
         setAlertMessage(message);
         setAlertType(type);
         setIsModalVisible(true);
-
-        // Close modal automatically after 5 seconds
         setTimeout(() => {
             setIsModalVisible(false);
         }, 4000);
     };
 
-    // Fetch Appareils
     useEffect(() => {
         const fetchAppareils = async () => {
             const token = localStorage.getItem("token");
@@ -49,6 +47,7 @@ function Appareils() {
                     },
                 });
                 setAppareils(res.data);
+                setFilteredAppareils(res.data); // Initialize filtered list
             } catch (error: any) {
                 if (error.response && error.response.status === 403) {
                     localStorage.removeItem("token");
@@ -63,6 +62,19 @@ function Appareils() {
 
         fetchAppareils();
     }, [navigate]);
+
+    // Handle Search
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const query = e.target.value.toLowerCase();
+        setSearchQuery(query);
+        const filtered = appareils.filter(
+            (a: any) =>
+                a.marque.toLowerCase().includes(query) ||
+                a.modele.toLowerCase().includes(query) ||
+                a.numSerie.toLowerCase().includes(query)
+        );
+        setFilteredAppareils(filtered);
+    };
 
     // Client Popover Content
     const content = (c: Client) => (
@@ -111,8 +123,19 @@ function Appareils() {
                     </div>
                 )}
 
+                {/* Search Bar */}
+                <div className="flex justify-end mb-4">
+                    <input
+                        type="text"
+                        placeholder="Rechercher par marque, modèle ou numéro de série..."
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        className="border border-gray-300 rounded-md px-3 py-2 w-1/3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                </div>
+
                 {/* Appareils Table */}
-                {appareils.length > 0 ? (
+                {filteredAppareils.length > 0 ? (
                     <Table hoverable>
                         <Table.Head>
                             <Table.HeadCell>Marque</Table.HeadCell>
@@ -121,7 +144,7 @@ function Appareils() {
                             <Table.HeadCell>Client</Table.HeadCell>
                         </Table.Head>
                         <Table.Body className="divide-y">
-                            {appareils.map((a: any, index: number) => (
+                            {filteredAppareils.map((a: any, index: number) => (
                                 <Table.Row key={index} className="bg-white dark:border-gray-700 dark:bg-gray-800">
                                     <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
                                         {a.marque}
@@ -147,7 +170,7 @@ function Appareils() {
                         </Table.Body>
                     </Table>
                 ) : (
-                    <div className="text-gray-500 text-center">Aucun appareil à afficher.</div>
+                    <div className="text-gray-500 text-center mt-4">Aucun appareil à afficher.</div>
                 )}
             </div>
         </div>

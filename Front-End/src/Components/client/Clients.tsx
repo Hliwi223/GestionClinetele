@@ -5,7 +5,9 @@ import axios from "axios";
 import { Table } from "flowbite-react";
 
 function Clients() {
-    const [clients, setClients] = useState([]);
+    const [clients, setClients] = useState([]); // Original clients from API
+    const [filteredClients, setFilteredClients] = useState([]); // Clients to display
+    const [searchQuery, setSearchQuery] = useState(""); // State for the search input
     const navigate = useNavigate();
 
     // Alert state
@@ -13,19 +15,15 @@ function Clients() {
     const [alertType, setAlertType] = useState<"success" | "error">("success");
     const [isModalVisible, setIsModalVisible] = useState(false);
 
-    // Function to show alerts dynamically in a modal with timeout
     const showAlert = (message: string, type: "success" | "error") => {
         setAlertMessage(message);
         setAlertType(type);
         setIsModalVisible(true);
-
-        // Close modal after 5 seconds
         setTimeout(() => {
             setIsModalVisible(false);
         }, 4000);
     };
 
-    // Close Modal
     const closeModal = () => setIsModalVisible(false);
 
     useEffect(() => {
@@ -38,12 +36,10 @@ function Clients() {
             }
             try {
                 const res = await axios.get("http://localhost:8080/api/clients", {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                    headers: { Authorization: `Bearer ${token}` },
                 });
                 setClients(res.data);
-
+                setFilteredClients(res.data); // Initialize filtered clients
             } catch (err) {
                 if (axios.isAxiosError(err)) {
                     if (err.response?.status === 403) {
@@ -59,9 +55,20 @@ function Clients() {
                 }
             }
         };
-
         fetchClients();
     }, [navigate]);
+
+    // Handle search input change
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const query = e.target.value.toLowerCase();
+        setSearchQuery(query);
+        const filtered = clients.filter((client: any) =>
+            client.nom.toLowerCase().includes(query)||
+            client.adresse.toLowerCase().includes(query)||
+            client.numTel.toLowerCase().includes(query)
+        );
+        setFilteredClients(filtered);
+    };
 
     return (
         <div className="flex">
@@ -94,8 +101,19 @@ function Clients() {
                     </div>
                 )}
 
+                {/* Search Bar */}
+                <div className="flex justify-end mb-4">
+                    <input
+                        type="text"
+                        placeholder="Rechercher un client par nom, adresse, Numero Tel"
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        className="border border-gray-300 rounded-md px-3 py-2 w-1/3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                </div>
+
                 {/* Client Table */}
-                {clients.length > 0 ? (
+                {filteredClients.length > 0 ? (
                     <Table hoverable>
                         <Table.Head>
                             <Table.HeadCell>Nom</Table.HeadCell>
@@ -103,7 +121,7 @@ function Clients() {
                             <Table.HeadCell>Numéro de Téléphone</Table.HeadCell>
                         </Table.Head>
                         <Table.Body className="divide-y">
-                            {clients.map((c: any, index: number) => (
+                            {filteredClients.map((c: any, index: number) => (
                                 <Table.Row
                                     key={index}
                                     className="bg-white dark:border-gray-700 dark:bg-gray-800"

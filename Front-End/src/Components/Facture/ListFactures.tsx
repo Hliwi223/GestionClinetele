@@ -128,9 +128,11 @@ const ListFactures = () => {
             </body>
         </html>
     `;
-        printWindow.document.write(content);
-        printWindow.document.close();
-        printWindow.print();
+        if (printWindow != null) {
+            printWindow.document.write(content);
+            printWindow.document.close();
+            printWindow.print();
+        }
         navigate("/listFacture");
     };
 

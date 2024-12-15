@@ -5,8 +5,7 @@ import Dashboard from "../dashboard/Dashboard.tsx";
 import { List, Popover, Table } from "flowbite-react";
 import Alert from "../customComponent/Alerts";
 
-
-const Reparations = ()=> {
+const Reparations = () => {
     const navigate = useNavigate();
 
     // State Management
@@ -103,10 +102,7 @@ const Reparations = ()=> {
                     <List.Item>
                         Appareil:{" "}
                         <Popover content={contentA(r.appareil)} placement="right">
-                            <a
-                                href="#"
-                                className="font-medium text-cyan-600 hover:underline dark:text-cyan-500"
-                            >
+                            <a href="#" className="font-medium text-cyan-600 hover:underline dark:text-cyan-500">
                                 {r.appareil.id}
                             </a>
                         </Popover>
@@ -114,10 +110,7 @@ const Reparations = ()=> {
                     <List.Item>
                         Client:{" "}
                         <Popover content={contentC(r.client)} placement="right">
-                            <a
-                                href="#"
-                                className="font-medium text-cyan-600 hover:underline dark:text-cyan-500"
-                            >
+                            <a href="#" className="font-medium text-cyan-600 hover:underline dark:text-cyan-500">
                                 {r.client.id}
                             </a>
                         </Popover>
@@ -128,7 +121,7 @@ const Reparations = ()=> {
     );
 
     return (
-        <div className="flex">
+        <div className="d-flex">
             <Dashboard sidebarOpen={true} setSidebarOpen={() => true} />
 
             <div className="ml-44 mt-6 w-full">
@@ -136,38 +129,37 @@ const Reparations = ()=> {
                 {isAlertVisible && <Alert message={alertMessage} type={alertType} />}
 
                 {/* Reparations Table */}
-                <Table hoverable>
-                    <Table.Head>
-                        <Table.HeadCell>Date Réparation</Table.HeadCell>
-                        <Table.HeadCell>Description</Table.HeadCell>
-                        <Table.HeadCell>Tarif HMO</Table.HeadCell>
-                        <Table.HeadCell>Temps MO</Table.HeadCell>
-                        <Table.HeadCell>Demande Réparation</Table.HeadCell>
-                    </Table.Head>
-                    <Table.Body className="divide-y">
-                        {reparations.map((r: any, index: number) => (
-                            <Table.Row key={index} className="bg-white dark:bg-gray-800">
-                                <Table.Cell>{new Date(r.dateRep).toLocaleDateString()}</Table.Cell>
-                                <Table.Cell>{r.description}</Table.Cell>
-                                <Table.Cell>{r.tarifHMO}</Table.Cell>
-                                <Table.Cell>{r.tempsMO}</Table.Cell>
-                                <Table.Cell>
-                                    <Popover content={content(r.demandeReparation)} placement="right">
-                                        <a
-                                            href="#"
-                                            className="font-medium text-cyan-600 hover:underline dark:text-cyan-500"
-                                        >
-                                            {r.demandeReparation.id}
-                                        </a>
-                                    </Popover>
-                                </Table.Cell>
-                            </Table.Row>
-                        ))}
-                    </Table.Body>
-                </Table>
+                <div className="card p-4">
+                    <Table hoverable>
+                        <Table.Head>
+                            <Table.HeadCell>Date Réparation</Table.HeadCell>
+                            <Table.HeadCell>Description</Table.HeadCell>
+                            <Table.HeadCell>Tarif HMO</Table.HeadCell>
+                            <Table.HeadCell>Temps MO</Table.HeadCell>
+                            <Table.HeadCell>Demande Réparation</Table.HeadCell>
+                        </Table.Head>
+                        <Table.Body className="divide-y">
+                            {reparations.map((r: any, index: number) => (
+                                <Table.Row key={index} className="bg-white dark:bg-gray-800">
+                                    <Table.Cell>{new Date(r.dateRep).toLocaleDateString()}</Table.Cell>
+                                    <Table.Cell>{r.description}</Table.Cell>
+                                    <Table.Cell>{r.tarifHMO}</Table.Cell>
+                                    <Table.Cell>{r.tempsMO}</Table.Cell>
+                                    <Table.Cell>
+                                        <Popover content={content(r.demandeReparation)} placement="right">
+                                            <a href="#" className="font-medium text-cyan-600 hover:underline dark:text-cyan-500">
+                                                {r.demandeReparation.id}
+                                            </a>
+                                        </Popover>
+                                    </Table.Cell>
+                                </Table.Row>
+                            ))}
+                        </Table.Body>
+                    </Table>
+                </div>
             </div>
         </div>
     );
-}
+};
 
-export default Reparations
+export default Reparations;

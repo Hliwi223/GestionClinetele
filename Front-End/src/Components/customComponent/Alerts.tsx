@@ -1,6 +1,9 @@
-import React, { useState } from "react";
-
-const Alert = ({ message, type = "error" }) => {
+import  { useState } from "react";
+interface AlertProps {
+    message: string;
+    type?: "error" | "success";
+}
+const Alert = ({ message, type = "error" }:AlertProps) => {
     const [isVisible, setIsVisible] = useState(true);
 
     const handleDismiss = () => {

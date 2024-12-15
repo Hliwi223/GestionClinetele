@@ -56,10 +56,24 @@ public class FactureService {
     }
 
     public BigDecimal calculateTotalPieces(Reparation reparation) {
+        if (reparation.getReparationPieces() == null || reparation.getReparationPieces().isEmpty()) {
+            return BigDecimal.ZERO; // Handle case where there are no pieces
+        }
+
         return reparation.getReparationPieces().stream()
-                .map(piece -> piece.getPieceRecharge().getPrixAchat().multiply(BigDecimal.valueOf(piece.getQte())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add); // Sum up the total price with quantities
+                .filter(piece -> piece.getPieceRecharge() != null) // Exclude null PieceRecharge objects
+                .map(piece -> {
+                    BigDecimal price = piece.getPieceRecharge().getPrixAchat() != null
+                            ? piece.getPieceRecharge().getPrixAchat()
+                            : BigDecimal.ZERO;
+                    BigDecimal quantity = piece.getQte() != null
+                            ? BigDecimal.valueOf(piece.getQte())
+                            : BigDecimal.ONE;
+                    return price.multiply(quantity);
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add); // Sum up the total
     }
+
 
 
     public BigDecimal calculateTotalMainDoeuvre(Reparation reparation) {
