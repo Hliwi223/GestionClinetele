@@ -6,26 +6,40 @@ import {useNavigate} from "react-router-dom";
 
 
 function Login() {
-    const [userName, setUserName] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
+    const [userName, setUserName] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const HandleLogin=async (e:FormEvent<HTMLFormElement>)  => {
         e.preventDefault();
         setError('');
+        setLoading(true);
+
+        // Basic input validation
+        if (!userName || !password) {
+            setError("Veuillez remplir tous les champs.");
+            setLoading(false);
+            return;
+        }
+
         try {
-             await axios.post('http://localhost:8080/api/auth/login', {
-                 params: {
-                     userName: userName,
-                     password: password,
-                 }
+            const response = await axios.post("http://localhost:8080/api/auth/authenticate", {
+                email: userName, // Assuming email is the username
+                password: password,
             });
 
+            const token = response.data.token;
+            // Save token to localStorage
+            localStorage.setItem("token", token);
+
             navigate('/dashboard');
-        }
-        catch (error) {
-            setError("InValid Email or password ");
+
+        } catch (error) {
+            setError("Identifiant ou mot de passe incorrect.");
+        } finally {
+            setLoading(false);
         }
     }
 

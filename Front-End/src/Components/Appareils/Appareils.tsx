@@ -1,28 +1,71 @@
-import  {useEffect, useState} from 'react';
+import { useEffect, useState } from "react";
 import axios from "axios";
 import Dashboard from "../dashboard/Dashboard.tsx";
-import {List, Popover, Table} from "flowbite-react";
+import { List, Popover, Table } from "flowbite-react";
+import { useNavigate } from "react-router-dom";
 
-
-interface  client{
-    id:number
-    adresse: string
-    nom: string
-    numTel: string
+interface Client {
+    id: number;
+    adresse: string;
+    nom: string;
+    numTel: string;
 }
-function Appareils():any {
+
+function Appareils() {
     const [appareils, setAppareils] = useState([]);
 
+    // Alert State
+    const [alertMessage, setAlertMessage] = useState("");
+    const [alertType, setAlertType] = useState<"success" | "error">("success");
+    const [isModalVisible, setIsModalVisible] = useState(false);
+
+    const navigate = useNavigate();
+
+    // Function to show alerts dynamically in a modal with timeout
+    const showAlert = (message: string, type: "success" | "error") => {
+        setAlertMessage(message);
+        setAlertType(type);
+        setIsModalVisible(true);
+
+        // Close modal automatically after 5 seconds
+        setTimeout(() => {
+            setIsModalVisible(false);
+        }, 4000);
+    };
+
+    // Fetch Appareils
     useEffect(() => {
-        axios.get("http://localhost:8080/api/appareils").then(
-            res=>{
+        const fetchAppareils = async () => {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                showAlert("Session expirée. Veuillez vous reconnecter.", "error");
+                navigate("/login");
+                return;
+            }
+            try {
+                const res = await axios.get("http://localhost:8080/api/appareils", {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
                 setAppareils(res.data);
-                console.log(appareils)
-            }).catch(error => {
-            console.log(error);
-        });
-    }, []);
-    const content=(c:client) => (
+            } catch (error: any) {
+                if (error.response && error.response.status === 403) {
+                    localStorage.removeItem("token");
+                    showAlert("Votre session a expiré. Veuillez vous reconnecter.", "error");
+                    navigate("/login");
+                } else {
+                    console.error("Error fetching appareils:", error);
+                    showAlert("Erreur lors du chargement des appareils.", "error");
+                }
+            }
+        };
+
+        fetchAppareils();
+    }, [navigate]);
+
+    // Client Popover Content
+    const content = (c: Client) => (
         <div className="w-64 text-sm text-gray-500 dark:text-gray-400">
             <div className="border-b border-gray-200 bg-gray-100 px-3 py-2 dark:border-gray-600 dark:bg-gray-700">
                 <h3 className="font-semibold text-gray-900 dark:text-white">Client</h3>
@@ -31,49 +74,84 @@ function Appareils():any {
                 <List>
                     <List.Item>ID : {c.id}</List.Item>
                     <List.Item>Nom : {c.nom}</List.Item>
-                    <List.Item>Numero Tel : {c.numTel}</List.Item>
+                    <List.Item>Numéro Tel : {c.numTel}</List.Item>
                 </List>
             </div>
         </div>
     );
-    return (
 
-            <div className=" flex">
-                <Dashboard sidebarOpen={true} setSidebarOpen={()=>true}/>
-                <div className="">
-                    <Table hoverable className="ml-80">
+    return (
+        <div className="flex">
+            {/* Sidebar */}
+            <Dashboard sidebarOpen={true} setSidebarOpen={() => true} />
+
+            {/* Main Content */}
+            <div className="ml-72 mt-6 w-full">
+                {/* Modal Alert */}
+                {isModalVisible && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                        <div className="bg-white rounded-lg p-6 w-96 shadow-lg">
+                            <h3
+                                className={`text-lg font-semibold ${
+                                    alertType === "success" ? "text-green-600" : "text-red-600"
+                                }`}
+                            >
+                                {alertType === "success" ? "Succès" : "Erreur"}
+                            </h3>
+                            <p className="mt-2 text-gray-700">{alertMessage}</p>
+                            <div className="mt-4 flex justify-end">
+                                <button
+                                    onClick={() => setIsModalVisible(false)}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-500"
+                                >
+                                    Fermer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Appareils Table */}
+                {appareils.length > 0 ? (
+                    <Table hoverable>
                         <Table.Head>
                             <Table.HeadCell>Marque</Table.HeadCell>
-                            <Table.HeadCell>Modele</Table.HeadCell>
-                            <Table.HeadCell>Num Serie</Table.HeadCell>
-                            <Table.HeadCell>Client ID</Table.HeadCell>
+                            <Table.HeadCell>Modèle</Table.HeadCell>
+                            <Table.HeadCell>Numéro de Série</Table.HeadCell>
+                            <Table.HeadCell>Client</Table.HeadCell>
                         </Table.Head>
                         <Table.Body className="divide-y">
-                            {appareils.map((a: any) => (
-                                <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
+                            {appareils.map((a: any, index: number) => (
+                                <Table.Row key={index} className="bg-white dark:border-gray-700 dark:bg-gray-800">
                                     <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
                                         {a.marque}
                                     </Table.Cell>
                                     <Table.Cell>{a.modele}</Table.Cell>
                                     <Table.Cell>{a.numSerie}</Table.Cell>
                                     <Table.Cell>
-                                        {a.client == null ? "Not Selected" : <Popover content={content(a.client)} placement="right">
-                                            <a href="#"
-                                               className="font-medium text-cyan-600 hover:underline dark:text-cyan-500">
-                                                {a.client.id}
-                                            </a>
-                                        </Popover> }
-
+                                        {a.client == null ? (
+                                            "Non sélectionné"
+                                        ) : (
+                                            <Popover content={content(a.client)} placement="right">
+                                                <a
+                                                    href="#"
+                                                    className="font-medium text-cyan-600 hover:underline dark:text-cyan-500"
+                                                >
+                                                    {a.client.id}
+                                                </a>
+                                            </Popover>
+                                        )}
                                     </Table.Cell>
                                 </Table.Row>
                             ))}
                         </Table.Body>
                     </Table>
-                </div>
+                ) : (
+                    <div className="text-gray-500 text-center">Aucun appareil à afficher.</div>
+                )}
             </div>
-
+        </div>
     );
-
 }
 
 export default Appareils;

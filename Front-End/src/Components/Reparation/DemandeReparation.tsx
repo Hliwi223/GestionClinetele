@@ -2,9 +2,13 @@ import Dashboard from "../dashboard/Dashboard.tsx";
 import {FormEvent, useEffect, useState} from "react";
 import  axios from "axios";
 import Alert from "../customComponent/Alerts.tsx";
+import { useNavigate } from "react-router-dom";
 
 
 function DemandeReparation() {
+
+    const navigate = useNavigate();
+
     // Alert State
     const [isAlertVisible, setIsAlertVisible] = useState(false);
     const [alertMessage, setAlertMessage] = useState('');
@@ -13,6 +17,7 @@ function DemandeReparation() {
     // Clients and Appareils State
     const [clients, setClients] = useState([]);
     const [appareils, setAppareils] = useState([]);
+    const [filteredAppareils, setFilteredAppareils] = useState([]);
 
     // Form State
     const [demandeReparation, setDemandeReparation] = useState({
@@ -24,32 +29,70 @@ function DemandeReparation() {
 
         });
 
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                navigate("/login");
+                return;
+            }
+
+            try {
+                const clientsRes = await axios.get("http://localhost:8080/api/clients", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                setClients(clientsRes.data);
+
+                const appareilsRes = await axios.get("http://localhost:8080/api/appareils", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                setAppareils(appareilsRes.data);
+            } catch (error: any) {
+                console.error("Error fetching data:", error);
+                if (error.response && error.response.status === 403) {
+                    localStorage.removeItem("token");
+                    navigate("/login");
+                } else {
+                    setAlertMessage("Erreur lors du chargement des données.");
+                    setAlertType("error");
+                    setIsAlertVisible(true);
+                }
+            }
+        };
+
+        fetchData();
+    }, [navigate]);
+
+    // Filter Appareils Based on Selected Client
+    useEffect(() => {
+        const { clientId } = demandeReparation;
+        if (clientId) {
+            setFilteredAppareils(
+                appareils.filter(
+                    (appareil: any) =>
+                        appareil.client == null || appareil.client.id.toString() === clientId
+                )
+            );
+        } else {
+            setFilteredAppareils(appareils.filter((appareil: any) => appareil.client == null));
+        }
+    }, [demandeReparation.clientId, appareils]);
+
     // Update Form State on Input Change
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setDemandeReparation({ ...demandeReparation, [name]: value });
     };
-    useEffect(() => {
-        axios.get("http://localhost:8080/api/clients")
-            .then(res => setClients(res.data))
-            .catch(error => console.error("Error fetching clients:", error));
-
-        axios.get("http://localhost:8080/api/appareils")
-            .then(res => setAppareils(res.data))
-            .catch(error => console.error("Error fetching appareils:", error));
-    }, []);
-
 
     // Update Appareil with Associated Client
-    const updateAppareil = async (appareilId: string, client: any) => {
-        try {
-            await axios.put(`http://localhost:8080/api/update-appareil/${appareilId}`, client);
-        } catch (error) {
-            console.error("Error updating appareil:", error);
-            setAlertMessage("Erreur lors de la mise à jour de l'appareil.");
-            setAlertType('error');
-            setIsAlertVisible(true);
-        }
+    const updateAppareil = async (appareilId: string, clientId: string) => {
+        const token = localStorage.getItem("token");
+        await axios.put(
+            `http://localhost:8080/api/update-appareil/${appareilId}`,
+            { id: clientId },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
     };
     // Form Submission Handler
     const handleSubmit = async  (e:FormEvent<HTMLFormElement>) => {
@@ -70,19 +113,28 @@ function DemandeReparation() {
         //  New Demande Object
         const newDemande = {
             dateDepotAppareil: new Date().toISOString().split('T')[0],
-            datePrevueRep :new Date(demandeReparation.datePrevue).toISOString().split('T')[0],
+            datePrevueRep: new Date(demandeReparation.datePrevue).toISOString().split('T')[0],
             etat: demandeReparation.etat,
             symptomesPanne: demandeReparation.symptomesPanne,
-            appareil: {id:demandeReparation.appareilId },
-            client: {id:demandeReparation.clientId }
+            appareil: {id: demandeReparation.appareilId},
+            client: {id: demandeReparation.clientId}
         };
 
         try {
+
+            const token = localStorage.getItem("token");
+            if (!token) {
+                navigate("/login");
+                return;
+            }
+
             // Update Appareil with Client Association
-            await updateAppareil(newDemande.appareil.id, newDemande.client);
+            await updateAppareil(demandeReparation.appareilId, demandeReparation.clientId);
 
             // Submit Demande Reparation
-            const response = await axios.post("http://localhost:8080/api/demande-reparation",newDemande);
+            await axios.post("http://localhost:8080/api/demande-reparation", newDemande, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
             setAlertMessage("Demande de réparation créée avec succès !");
             setAlertType("success");
             setIsAlertVisible(true);
@@ -95,14 +147,27 @@ function DemandeReparation() {
                 symptomesPanne: '',
                 etat: 'EN_ATTENTE'
             });
-        } catch (error) {
-            console.error("Error creating demande reparation:", error);
-            setAlertMessage("Erreur lors de la création de la demande de réparation.");
-            setAlertType("error");
-            setIsAlertVisible(true);
-        }
+        } catch (error: any) {
+            if (error.response && error.response.status === 403) {
+                localStorage.removeItem("token");
+                navigate("/login");
+            } else {
+                console.error("Error creating demande reparation:", error);
+                setAlertMessage("Erreur lors de la création de la demande de réparation.");
+                setAlertType("error");
+                setIsAlertVisible(true);
+            }
 
+        }
     }
+
+    // Alert Timeout
+    useEffect(() => {
+        if (isAlertVisible) {
+            const timer = setTimeout(() => setIsAlertVisible(false), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [isAlertVisible]);
     return (
         <div>
             {/* Dashboard with Sidebar */}
@@ -149,9 +214,9 @@ function DemandeReparation() {
                                 }`}
                             >
                                 <option value=" ">Select  Appareil</option>
-                                {appareils.map((appareil: any): any => (
+                                {filteredAppareils.map((appareil: any): any => (
                                     <option key={appareil.id} value={appareil.id}>
-                                        {appareil.marque}-{appareil.modele}-{appareil.numSerie}
+                                       Marque: {appareil.marque} || Modele: {appareil.modele} || Numero Serie: {appareil.numSerie} || Client : {appareil.client == null ? "Not Selected" : appareil.client.id }
                                     </option>
                                 ))}
                             </select>

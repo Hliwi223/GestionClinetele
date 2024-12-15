@@ -8,12 +8,12 @@ import AddClient from "./Components/client/AddClient.tsx";
 import AddAppareils from "./Components/Appareils/AddAppareils.tsx";
 import Appareils from "./Components/Appareils/Appareils.tsx";
 import DemandeReparation from "./Components/Reparation/DemandeReparation.tsx";
-import Reparations from "./Components/Reparation/Reparations.tsx";
 import Reparation from "./Components/Reparation/Reparation.tsx";
-import ListReparaions from "./Components/Reparation/ListReparaions.tsx";
 import ListFactures from "./Components/Facture/ListFactures.tsx";
 import AddPiece from "./Components/priceDeRecharge/AddPiece.tsx";
 import ListPirces from "./Components/priceDeRecharge/ListPirces.tsx";
+import ListDemandeReparations from "./Components/Reparation/ListDemandeReparations.tsx";
+import Reparations from "./Components/Reparation/Reparations.tsx";
 
 
 function App() {
@@ -23,7 +23,7 @@ function App() {
 
           <BrowserRouter>
               <Routes>
-                  <Route path="/dashboard" element={<Dashboard sidebarOpen={true} setSidebarOpen={true}/>}/>
+                  <Route path="/dashboard" element={<Dashboard sidebarOpen={true} setSidebarOpen={()=>true}/>}/>
                   <Route path="/login" element={<Login/>}/>
                   <Route path="/" element={<Login/>}/>
                   <Route path="/clients" element={<Clients/>}/>
@@ -31,9 +31,9 @@ function App() {
                   <Route path="/AddAppareil" element={<AddAppareils/>}/>
                   <Route path="/Appareils" element={<Appareils/>}/>
                   <Route path="/demandeReparation" element={<DemandeReparation/>}/>
-                  <Route path="/listDemande" element={<Reparations/>}/>
+                  <Route path="/listDemande" element={<ListDemandeReparations/>}/>
                   <Route path="/createReparation" element={<Reparation/>}/>
-                  <Route path="/reparations" element={<ListReparaions/>}/>
+                  <Route path="/reparations" element={<Reparations/>}/>
                   <Route path="/listFacture" element={<ListFactures/>}/>
                   <Route path="/createPiece" element={<AddPiece/>}/>
                   <Route path="/listPieces" element={<ListPirces/>}/>

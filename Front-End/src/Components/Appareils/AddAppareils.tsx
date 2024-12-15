@@ -1,15 +1,17 @@
 import Dashboard from "../dashboard/Dashboard.tsx";
-import  {FormEvent, useState} from "react";
+import {FormEvent, useEffect, useState} from "react";
 import  axios from "axios";
 import Alert from "../customComponent/Alerts.tsx";
+import { useNavigate } from "react-router-dom";
 
 
 function  AddAppareils() {
+    const navigate = useNavigate();
 
-    //alert
+    // Alert state
     const [isAlertVisible, setIsAlertVisible] = useState(false);
-    const [alertMessage, setAlertMessage] = useState('');
-    const [alertType, setAlertType] = useState('');
+    const [alertMessage, setAlertMessage] = useState("");
+    const [alertType, setAlertType] = useState<"success" | "error">("success");
 
     // Appareil state
     const [Appareil, setAppareil] = useState(
@@ -22,11 +24,20 @@ function  AddAppareils() {
     // Check if appareil already exists
     const checkIfAppareilExists = async (numSerie: string) => {
         try {
-            const response = await axios.get(`http://localhost:8080/api/appareils/exists/${numSerie}`);
+            const token = localStorage.getItem("token");
+            if (!token) {
+                navigate("/login");
+                return false;
+            }
+            const response = await axios.get(`http://localhost:8080/api/appareils/exists/${numSerie}`,{
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
             return response.data;
         } catch (error) {
             console.error("Error checking if appareil exists:", error);
-            return false; // Default to not existing if the check fails
+            return false;
         }
     };
 
@@ -34,12 +45,17 @@ function  AddAppareils() {
     const handleChange =   ( e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setAppareil({ ...Appareil, [name]: value });
-        console.log(`Updated Appareil:`, { ...Appareil, [name]: value });
     };
 
     // Handle form submission
     const handleSubmit =async (e:FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+            navigate("/login");
+            return;
+        }
 
         // Validate inputs
         if (!Appareil.marque || !Appareil.modele || !Appareil.numSerie ) {
@@ -65,7 +81,11 @@ function  AddAppareils() {
             client: null
         };
         try {
-            await axios.post("http://localhost:8080/api/addAppareil", AppareilOpbject);
+            await axios.post("http://localhost:8080/api/addAppareil", AppareilOpbject ,{
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
             setAlertMessage("Appareil ajouté avec succès !");
             setAlertType("success");
             setIsAlertVisible(true);
@@ -77,12 +97,23 @@ function  AddAppareils() {
                 numSerie: "",
             });
         }catch (error) {
-            console.error("Error adding appareil:", error);
-            setAlertMessage("Erreur lors de l'ajout de l'appareil.");
-            setAlertType("error");
-            setIsAlertVisible(true);
+            if (axios.isAxiosError(error) && error.response?.status === 403) {
+                localStorage.removeItem("token");
+                navigate("/login");
+            } else {
+                console.error("Error adding appareil:", error);
+                setAlertMessage("Erreur lors de l'ajout de l'appareil.");
+                setAlertType("error");
+                setIsAlertVisible(true);
+            }
         }
     };
+    useEffect(() => {
+        if (isAlertVisible) {
+            const timer = setTimeout(() => setIsAlertVisible(false), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [isAlertVisible]);
     return (
         <div>
             {/* Dashboard with Sidebar */}
@@ -152,28 +183,6 @@ function  AddAppareils() {
                                 />
                             </div>
                         </div>
-                        {/* id Client Input
-                        <div>
-                            <label htmlFor="phone" className="block text-sm font-medium text-gray-900 text-left">
-                                Client
-                            </label>
-                            <select
-                                name="clientID"
-                                value={Appareil.clientID}
-                                onChange={handleChange}
-                                className={`relative z-20 w-full text-black rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary 
-                                }`}
-                            >
-                                <option value=" ">Select a Client</option>
-                                {clients.map((client: any):any => (
-                                    <option key={client.id} value={client.id}>
-                                        {client.nom}-{client.id}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-*/}
-
                     </div>
                 </div>
 
@@ -182,6 +191,7 @@ function  AddAppareils() {
                     <button
                         type="button"
                         className="text-sm font-semibold text-gray-900"
+                        onClick={() => setAppareil({ marque: "", modele: "", numSerie: "" })}
                     >
                         Annuler
                     </button>
@@ -197,5 +207,4 @@ function  AddAppareils() {
 
     );
 }
-
 export default AddAppareils;

@@ -1,191 +1,173 @@
-import React, { useEffect, useState} from "react";
-import Dashboard from "../dashboard/Dashboard.tsx";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import Alert from "../customComponent/Alerts.tsx";
-import {List, Popover, Table} from "flowbite-react";
+import { useNavigate } from "react-router-dom";
+import Dashboard from "../dashboard/Dashboard.tsx";
+import { List, Popover, Table } from "flowbite-react";
+import Alert from "../customComponent/Alerts";
 
 
+const Reparations = ()=> {
+    const navigate = useNavigate();
 
-
-function  Reparations(){
-
-
+    // State Management
     const [reparations, setReparations] = useState([]);
-    const [selectedDemande, setSelectedDemande] = useState(null);
-    const [status, setStatus] = useState('EN_ATTENTE');
-    const [showModal, setShowModal] = useState(false);
-
-    //alert
     const [isAlertVisible, setIsAlertVisible] = useState(false);
-    const [alertMessage, setAlertMessage] = useState('');
-    const [alertType, setAlertType] = useState('');
+    const [alertMessage, setAlertMessage] = useState("");
+    const [alertType, setAlertType] = useState<"success" | "error">("success");
 
-    const handleUpdateStatus=async (id, status)=> {
-        console.log(id);
-        console.log(status);
-      try {
-          await axios.put(`http://localhost:8080/api/update-status/${id}?status=${status}`)
-              .then(res =>
-                        console.log(res.data))
-          setShowModal(false);
-          setStatus('EN_ATTENTE');
-          setAlertMessage("Status de la demande mis à jour avec succès");
-          setAlertType('suc');
-          setIsAlertVisible(true);
-          fetchDemandeReparation();
-      }catch (err){
-          console.log(err);
-          setAlertMessage("Une erreur s'est produite lors de la mise à jour.");
-          setAlertType('error');
-          setIsAlertVisible(true);
-      }
-      }
+    // Function to Display Alerts
+    const showAlert = (message: string, type: "success" | "error") => {
+        setAlertMessage(message);
+        setAlertType(type);
+        setIsAlertVisible(true);
+        setTimeout(() => setIsAlertVisible(false), 5000);
+    };
 
-     const fetchDemandeReparation = async () => {
-         axios.get("http://localhost:8080/api/getReparations").then(
-             res=>{
-                 setReparations(res.data);
-             }).catch(error => {
-             console.log(error);
-         });
-     }
+    // Centralized API Fetch Function
+    const fetchData = async (url: string) => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            navigate("/login");
+            return null;
+        }
+
+        try {
+            const response = await axios.get(url, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            return response.data;
+        } catch (error: any) {
+            if (error.response && error.response.status === 403) {
+                localStorage.removeItem("token");
+                navigate("/login");
+            } else {
+                console.error("Error fetching data:", error);
+                showAlert("Erreur lors du chargement des données", "error");
+            }
+            return null;
+        }
+    };
+
+    // Fetch Reparations Data
+    const fetchReparations = async () => {
+        const data = await fetchData("http://localhost:8080/api/reparations");
+        if (data) {
+            setReparations(data);
+        }
+    };
+
     useEffect(() => {
-        fetchDemandeReparation();
+        fetchReparations();
     }, []);
-    const contentC=(c) => (
+
+    // Content for Popover (Client and Appareil Details)
+    const contentC = (c: any) => (
         <div className="w-64 text-sm text-gray-500 dark:text-gray-400">
-            <div className="border-b border-gray-200 bg-gray-100 px-3 py-2 dark:border-gray-600 dark:bg-gray-700">
+            <div className="border-b bg-gray-100 px-3 py-2 dark:bg-gray-700">
                 <h3 className="font-semibold text-gray-900 dark:text-white">Client</h3>
             </div>
             <div className="px-3 py-2">
                 <List>
-                    <List.Item>Nom : {c.nom}</List.Item>
-                    <List.Item>Numero Tel : {c.numTel}</List.Item>
+                    <List.Item>Nom: {c.nom}</List.Item>
+                    <List.Item>Numéro Tel: {c.numTel}</List.Item>
                 </List>
             </div>
         </div>
     );
-    const contentA=(a) => (
+
+    const contentA = (a: any) => (
         <div className="w-64 text-sm text-gray-500 dark:text-gray-400">
-            <div className="border-b border-gray-200 bg-gray-100 px-3 py-2 dark:border-gray-600 dark:bg-gray-700">
-                <h3 className="font-semibold text-gray-900 dark:text-white">Client</h3>
+            <div className="border-b bg-gray-100 px-3 py-2 dark:bg-gray-700">
+                <h3 className="font-semibold text-gray-900 dark:text-white">Appareil</h3>
             </div>
             <div className="px-3 py-2">
                 <List>
                     <List.Item>Marque: {a.marque}</List.Item>
-                    <List.Item>Modele : {a.modele}</List.Item>
-                    <List.Item>NumSerie: {a.numSerie}</List.Item>
+                    <List.Item>Modèle: {a.modele}</List.Item>
+                    <List.Item>Numéro Série: {a.numSerie}</List.Item>
                 </List>
             </div>
         </div>
     );
-    return (
-        <div className=" flex">
-            <Dashboard sidebarOpen={true} setSidebarOpen={true}/>
-            <div className="">
-                <div className=" flex">
-                    <Dashboard sidebarOpen={true} setSidebarOpen={() => true}/>
-                    <div className="">
-                        <Table hoverable className="ml-36">
-                            <Table.Head>
-                                <Table.HeadCell>Date Depot</Table.HeadCell>
-                                <Table.HeadCell>Date Prevue</Table.HeadCell>
-                                <Table.HeadCell>Stmptomes Panne</Table.HeadCell>
-                                <Table.HeadCell>Client</Table.HeadCell>
-                                <Table.HeadCell>Appareil</Table.HeadCell>
-                                <Table.HeadCell>Etat</Table.HeadCell>
-                                <Table.HeadCell>Actions</Table.HeadCell>
-                            </Table.Head>
-                            <Table.Body className="divide-y">
-                                {reparations.map((r: any) => (
-                                    <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
-                                        <Table.Cell
-                                            className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                                            { new Date(r.dateDepotAppareil).toLocaleDateString()}
-                                        </Table.Cell>
-                                        <Table.Cell>{ new Date(r.datePrevueRep).toLocaleDateString()}</Table.Cell>
-                                        <Table.Cell>{r.symptomesPanne}</Table.Cell>
 
-                                        <Table.Cell>
-                                            <Popover content={contentC(r.client)} placement="right">
-                                                <a href="#"
-                                                   className="font-medium text-cyan-600 hover:underline dark:text-cyan-500">
-                                                    {r.client.id}
-                                                </a>
-                                            </Popover>
-
-                                        </Table.Cell>
-                                        <Table.Cell>
-                                            <Popover content={contentA(r.appareil)} placement="right">
-                                                <a href="#"
-                                                   className="font-medium text-cyan-600 hover:underline dark:text-cyan-500">
-                                                    {r.appareil.id}
-                                                </a>
-                                            </Popover>
-
-                                        </Table.Cell>
-                                        <Table.Cell>{r.etat}</Table.Cell>
-                                        <Table.Cell>
-                                            <a href="#" onClick={() => {
-                                                setSelectedDemande(r);
-                                                setShowModal(true);
-                                            }} className="font-medium text-cyan-600 hover:underline dark:text-cyan-500">
-                                                Update
-                                            </a>
-                                        </Table.Cell>
-                                    </Table.Row>
-                                ))}
-
-
-                            </Table.Body>
-                        </Table>
-                    </div>
-                </div>
-
-                {showModal && (
-                    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
-                        <div className="bg-white rounded-lg w-96 p-6">
-                            <h3 className="text-xl font-semibold mb-4">Mettre à jour le statut</h3>
-                            <label htmlFor="status" className="block mb-2 text-gray-700">Sélectionner un
-                                statut:</label>
-                            <select
-                                id="status"
-                                value={status}
-                                onChange={(e) => setStatus(e.target.value)} // Update the status on selection
-                                className="w-full p-2 border border-gray-300 rounded-md mb-4"
+    const content = (r: any) => (
+        <div className="w-64 text-sm text-gray-500 dark:text-gray-400">
+            <div className="border-b bg-gray-100 px-3 py-2 dark:bg-gray-700">
+                <h3 className="font-semibold text-gray-900 dark:text-white">Demande Réparation</h3>
+            </div>
+            <div className="px-3 py-2">
+                <List>
+                    <List.Item>Date Dépôt: {new Date(r.dateDepotAppareil).toLocaleDateString()}</List.Item>
+                    <List.Item>Date Prévue: {new Date(r.datePrevueRep).toLocaleDateString()}</List.Item>
+                    <List.Item>État: {r.etat}</List.Item>
+                    <List.Item>
+                        Appareil:{" "}
+                        <Popover content={contentA(r.appareil)} placement="right">
+                            <a
+                                href="#"
+                                className="font-medium text-cyan-600 hover:underline dark:text-cyan-500"
                             >
-                                <option value="EN_ATTENTE">En attente</option>
-                                <option value="EN_COURS">EN COURS</option>
-                                <option value="TERMINE">Terminé</option>
-
-                            </select>
-
-                            <div className="flex justify-between">
-                                <button
-                                    onClick={() => {
-                                        handleUpdateStatus(selectedDemande.id, status);
-                                    }}
-                                    className="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-900 transition"
-                                >
-                                    Mettre à jour
-                                </button>
-                                <button
-                                    onClick={() => setShowModal(false)}
-                                    className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
-                                >
-                                    Annuler
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
+                                {r.appareil.id}
+                            </a>
+                        </Popover>
+                    </List.Item>
+                    <List.Item>
+                        Client:{" "}
+                        <Popover content={contentC(r.client)} placement="right">
+                            <a
+                                href="#"
+                                className="font-medium text-cyan-600 hover:underline dark:text-cyan-500"
+                            >
+                                {r.client.id}
+                            </a>
+                        </Popover>
+                    </List.Item>
+                </List>
             </div>
         </div>
+    );
 
-)
-    ;
+    return (
+        <div className="flex">
+            <Dashboard sidebarOpen={true} setSidebarOpen={() => true} />
 
+            <div className="ml-44 mt-6 w-full">
+                {/* Alert Display */}
+                {isAlertVisible && <Alert message={alertMessage} type={alertType} />}
+
+                {/* Reparations Table */}
+                <Table hoverable>
+                    <Table.Head>
+                        <Table.HeadCell>Date Réparation</Table.HeadCell>
+                        <Table.HeadCell>Description</Table.HeadCell>
+                        <Table.HeadCell>Tarif HMO</Table.HeadCell>
+                        <Table.HeadCell>Temps MO</Table.HeadCell>
+                        <Table.HeadCell>Demande Réparation</Table.HeadCell>
+                    </Table.Head>
+                    <Table.Body className="divide-y">
+                        {reparations.map((r: any, index: number) => (
+                            <Table.Row key={index} className="bg-white dark:bg-gray-800">
+                                <Table.Cell>{new Date(r.dateRep).toLocaleDateString()}</Table.Cell>
+                                <Table.Cell>{r.description}</Table.Cell>
+                                <Table.Cell>{r.tarifHMO}</Table.Cell>
+                                <Table.Cell>{r.tempsMO}</Table.Cell>
+                                <Table.Cell>
+                                    <Popover content={content(r.demandeReparation)} placement="right">
+                                        <a
+                                            href="#"
+                                            className="font-medium text-cyan-600 hover:underline dark:text-cyan-500"
+                                        >
+                                            {r.demandeReparation.id}
+                                        </a>
+                                    </Popover>
+                                </Table.Cell>
+                            </Table.Row>
+                        ))}
+                    </Table.Body>
+                </Table>
+            </div>
+        </div>
+    );
 }
 
-export default Reparations;
+export default Reparations

@@ -22,8 +22,12 @@ function AddClient() {
     // Check if client already exists by name
     const checkIfClientExists = async (nom: string) => {
         try {
+            const token = localStorage.getItem("token");
             const response = await axios.get(`http://localhost:8080/api/clients/exists`, {
-                params: { nom }
+                params: { nom },
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
             });
             return response.data;
         } catch (error) {
@@ -90,7 +94,14 @@ function AddClient() {
         }
 
         try{
-            await axios.post("http://localhost:8080/api/addClient", client)
+            const token = localStorage.getItem("token");
+            await axios.post("http://localhost:8080/api/addClient", client,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+            );
 
             setAlertMessage("Client ajouté avec succès !");
             setAlertType("success");
