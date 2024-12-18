@@ -19,6 +19,7 @@ function DemandeReparation() {
     const [appareils, setAppareils] = useState([]);
     const [filteredAppareils, setFilteredAppareils] = useState([]);
 
+
     // Form State
     const [demandeReparation, setDemandeReparation] = useState({
             clientId : '',
@@ -29,6 +30,69 @@ function DemandeReparation() {
 
         });
 
+// Handle Print Logic
+    const handlePrint = (info: any) => {
+        const printWindow = window.open("", "_blank");
+        const content = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Demande Soumise</title>
+            <style>
+                body {
+                    margin: 0;
+                    padding: 0;
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f4;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                }
+                .container {
+                    padding: 20px;
+                    border: 1px solid #ddd;
+                    border-radius: 8px;
+                    background-color: #f9f9f9;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                    width: 400px;
+                    text-align: center;
+                }
+                h2 {
+                    font-size: 24px;
+                    font-weight: 600;
+                    color: #333;
+                    margin-bottom: 20px;
+                }
+                p {
+                    font-size: 16px;
+                    color: #555;
+                    margin: 8px 0;
+                }
+                strong {
+                    color: #222;
+                    font-weight: bold;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h2>Demande de Reparation</h2>
+                <p><strong>Demande ID:</strong> ${info.id}</p>
+                <p><strong>Client:</strong> ${info.client.id} - ${info.client.nom } -  ${info.client.adresse}</p>
+                <p><strong>Appareil:</strong> ${info.appareil.id} - ${info.appareil.marque} - ${info.appareil.modele}</p>
+            </div>
+        </body>
+        </html>
+        `;
+        if (printWindow != null) {
+            printWindow.document.write(content);
+            printWindow.document.close();
+            printWindow.print();
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -109,6 +173,17 @@ function DemandeReparation() {
             setIsAlertVisible(true);
             return;
         }
+        // Date Validation: Ensure the selected date is in the future
+        const today = new Date();
+        const selectedDate = new Date(demandeReparation.datePrevue);
+
+        if (selectedDate <= today) {
+            setAlertMessage("La date prévue doit être ultérieure à aujourd'hui.");
+            setAlertType("error");
+            setIsAlertVisible(true);
+            return;
+        }
+
 
         //  New Demande Object
         const newDemande = {
@@ -132,9 +207,12 @@ function DemandeReparation() {
             await updateAppareil(demandeReparation.appareilId, demandeReparation.clientId);
 
             // Submit Demande Reparation
-            await axios.post("http://localhost:8080/api/demande-reparation", newDemande, {
+            const response = await axios.post("http://localhost:8080/api/demande-reparation", newDemande, {
                 headers: { Authorization: `Bearer ${token}` },
             });
+
+            handlePrint(response.data);
+
             setAlertMessage("Demande de réparation créée avec succès !");
             setAlertType("success");
             setIsAlertVisible(true);
@@ -147,6 +225,8 @@ function DemandeReparation() {
                 symptomesPanne: '',
                 etat: 'EN_ATTENTE'
             });
+
+
         } catch (error: any) {
             if (error.response && error.response.status === 403) {
                 localStorage.removeItem("token");

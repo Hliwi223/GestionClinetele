@@ -65,6 +65,31 @@ const AddPiece: React.FC = () => {
         setPiece({ ...piece, [name]: value });
     };
 
+
+    // Form Validation
+    const validateForm = () => {
+        if (!piece.code || !piece.nom || !piece.prixAchat || !piece.prixHT || !piece.prixTTC || !piece.typePieceId) {
+            showAlert("Tous les champs sont obligatoires.", "error");
+            return false;
+        }
+
+        if (isNaN(Number(piece.prixAchat)) || Number(piece.prixAchat) <= 0) {
+            showAlert("Le prix d'achat doit être un nombre positif.", "error");
+            return false;
+        }
+
+        if (isNaN(Number(piece.prixHT)) || Number(piece.prixHT) <= 0) {
+            showAlert("Le prix HT doit être un nombre positif.", "error");
+            return false;
+        }
+
+        if (isNaN(Number(piece.prixTTC)) || Number(piece.prixTTC) <= 0) {
+            showAlert("Le prix TTC doit être un nombre positif.", "error");
+            return false;
+        }
+
+        return true;
+    };
     // Form Submit Handler
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -73,6 +98,7 @@ const AddPiece: React.FC = () => {
             navigate("/login");
             return;
         }
+        if (!validateForm()) return;
 
         const formData = {
             code: piece.code,

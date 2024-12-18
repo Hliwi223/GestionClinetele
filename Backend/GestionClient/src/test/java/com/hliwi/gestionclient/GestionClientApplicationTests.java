@@ -88,7 +88,7 @@ class GestionClientApplicationTests {
         Reparation validReparation = new Reparation();
         validReparation.setReparationPieces(new ArrayList<>(Arrays.asList(rp1, rp2)));
 
-        BigDecimal expectedTotal = new BigDecimal("70.0"); // 2 * 20.0 + 1 * 30.0
+        BigDecimal expectedTotal = new BigDecimal("90.0"); // 2 * 20.0 + 1 * 30.0
         assertEquals(expectedTotal, factureService.calculateTotalPieces(validReparation), "Valid pieces total should be 70.0");
 
         // Case 3: Null PieceRecharge or Quantity

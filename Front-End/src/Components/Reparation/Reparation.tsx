@@ -232,7 +232,7 @@ const Reparation: React.FC= ()=> {
                                 <option value=" ">Sélectionner une pièce</option>
                                 {demandeReparations.map((d: any): any => (
                                     <option key={d.id} value={d.id}>
-                                        {d.id}-{d.etat}-{d.symptomesPanne}
+                                        Id :{d.id} | Client Id: {d.client.id} | CLient Nom:  {d.client.nom} | Etat: {d.etat}
                                     </option>
                                 ))}
                             </select>
@@ -344,7 +344,7 @@ const Reparation: React.FC= ()=> {
                             {reparation.pieces.map((p, index) => (
                                 <li key={index} className="flex justify-between bg-gray-100 p-2 mb-2">
                                     <span>
-                                            Pièce ID: {p.pieceId} | Quantité: {p.qte}
+                                            Pièce Id: {p.pieceId} | Quantité: {p.qte}
                                     </span>
                                     <button
                                             type="button"

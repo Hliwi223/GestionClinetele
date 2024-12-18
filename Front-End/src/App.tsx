@@ -14,6 +14,7 @@ import AddPiece from "./Components/priceDeRecharge/AddPiece.tsx";
 import ListPirces from "./Components/priceDeRecharge/ListPirces.tsx";
 import ListDemandeReparations from "./Components/Reparation/ListDemandeReparations.tsx";
 import Reparations from "./Components/Reparation/Reparations.tsx";
+import DemandeDetails from "./Components/customComponent/DemandeDetails.tsx";
 
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
                   <Route path="/AddClient" element={<AddClient/>}/>
                   <Route path="/AddAppareil" element={<AddAppareils/>}/>
                   <Route path="/Appareils" element={<Appareils/>}/>
+                  <Route path="/demande-details" element={<DemandeDetails />} />
                   <Route path="/demandeReparation" element={<DemandeReparation/>}/>
                   <Route path="/listDemande" element={<ListDemandeReparations/>}/>
                   <Route path="/createReparation" element={<Reparation/>}/>
